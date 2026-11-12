@@ -10,7 +10,7 @@ It is a single Go binary with no third-party dependencies and no PowerShell invo
 - The `Stop` hook is supported too (`<project> - finished`, with the start of the last assistant message as body) but is not required; with many open tabs it is usually too noisy.
 - No toast is shown when you are already looking at that session: the shell's tab is the selected tab of the foreground Windows Terminal window.
 - Clicking the toast selects the originating tab (in any Windows Terminal window, even if it was dragged to another one) and raises its window.
-- The hook always exits 0 and never writes to stdout, so it cannot interfere with Claude Code. Failures are appended to `%TEMP%\claudetoaster.log`.
+- The hook always exits 0 and never writes to stdout, so it cannot interfere with Claude Code. Failures are appended to `%TEMP%\claudetoaster.log` (created only on the first failure, truncated above 256 KB). Running outside Windows Terminal is not a failure and is not logged.
 
 ## Requirements
 

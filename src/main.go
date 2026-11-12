@@ -12,6 +12,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/url"
@@ -26,6 +27,7 @@ const (
 	logFileName  = "claudetoaster.log"
 	focusHost    = "focus"
 	maxBodyRunes = 200
+	maxLogBytes  = 256 * 1024
 
 	notifyPermissionPrompt = "permission_prompt"
 )
@@ -116,7 +118,9 @@ func tabInUse(shellPID uint32) bool {
 func focusTarget() (uri string, shellPID uint32) {
 	shellPID, err := findShell()
 	if err != nil {
-		logf("no focus target: %v", err)
+		if !errors.Is(err, errNotInTerminal) {
+			logf("no focus target: %v", err)
+		}
 		return "", 0
 	}
 	created, err := processCreationTime(shellPID)
@@ -203,9 +207,15 @@ func runList() error {
 }
 
 // logf appends a line to the log in the temp dir; the binary has no console
-// when started by a hook or a toast click.
+// when started by a hook or a toast click. The file is truncated once it
+// exceeds maxLogBytes so it cannot grow without bound.
 func logf(format string, args ...any) {
-	f, err := os.OpenFile(filepath.Join(os.TempDir(), logFileName), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o600)
+	path := filepath.Join(os.TempDir(), logFileName)
+	flags := os.O_APPEND | os.O_CREATE | os.O_WRONLY
+	if info, err := os.Stat(path); err == nil && info.Size() > maxLogBytes {
+		flags = os.O_TRUNC | os.O_CREATE | os.O_WRONLY
+	}
+	f, err := os.OpenFile(path, flags, 0o600)
 	if err != nil {
 		return
 	}

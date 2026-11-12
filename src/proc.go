@@ -67,8 +67,11 @@ func findShell() (uint32, error) {
 			return chain[i-1].PID, nil
 		}
 	}
-	return 0, errors.New("no WindowsTerminal.exe in parent chain")
+	return 0, errNotInTerminal
 }
+
+// errNotInTerminal is a normal condition (other terminals, IDEs), not a failure.
+var errNotInTerminal = errors.New("no WindowsTerminal.exe in parent chain")
 
 // processCreationTime returns the process creation time as a FILETIME value.
 func processCreationTime(pid uint32) (uint64, error) {
